@@ -1,0 +1,15 @@
+# 个人配置（含账号凭据）。模板见 config.example.toml
+config.toml
+
+# 会话缓存
+cookies.json
+
+# 运行时产物：抓包样本、试运行导出的课程列表
+debug/
+
+# Python
+__pycache__/
+*.pyc
+
+# 本地虚拟环境（脚本本身零依赖，仅用于隔离运行）
+.venv/

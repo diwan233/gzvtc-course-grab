@@ -1,0 +1,106 @@
+# ============================================================================
+#  广州工程技术职业学院 网上选课抢课脚本 —— 配置模板
+#
+#  用法：复制为 config.toml，再填写 account 段的账号与密码
+#      Copy-Item config.example.toml config.toml
+#
+# ============================================================================
+
+
+[account]
+# 学生门户的登录凭据。留空则脚本直接报错退出
+studyNumber = ""
+password    = ""
+
+
+[target]
+# 课程关键字，可多个。
+#   · 每个关键字匹配到的课全部进池（满员的不剔除，只排在该关键字队列最后）
+#   · 多关键字时按关键字轮转交错尝试（尤克里里/瑜伽/人工智能/尤克里里/…），
+#     保证各目标抢课机会均等
+keywords = ["人工智能","尤克里里"]
+
+# 课程归属筛选，空 = 全部。
+# 可选值：专业选修课 / 职业素质类 / 人文素质类 / 基本技能类
+belonging = ""
+
+# 学期字符串，固定填写（换学期时手动修改）
+semester = "2026-2027学年第一学期"
+
+#   true  = 只保留有空位的班
+#   false = 所有匹配的课都进池，有空位的排最前、满员的排最后（默认）
+onlyWithVacancy = false
+
+
+[session]
+# 会话缓存文件（相对本脚本目录）。存在且未失效就不再登录
+cookieFile = "cookies.json"
+
+#   true  = 优先复用缓存的 JSESSIONID，跳过登录阶段
+reuseCookies = true
+
+# 0 = 不按时间判断过期（交给服务端判定，失效了会自动重新登录）
+cookieMaxAgeMinutes = 0
+
+
+[retry]
+# 两轮并发之间的间隔（毫秒）。一轮内所有线程是并发的，不串行等往返
+busyGapMs = 80
+
+# 一轮候选都失败后，重新拉取列表的间隔（毫秒）
+listIntervalMs = 1500
+
+# 是否重新拉取课程列表（刷新余量）：
+#   true  = 按下面的轮次间隔刷新
+#   false = 只在启动时拉一次，之后不再刷新
+refreshList = true
+
+# 每多少轮池循环重新拉一次列表（1 = 每轮都拉；5 = 第 5/10/15… 轮各拉一次）。
+# 列表接口同样受 6666 拦截，池子较大时无需每轮刷新
+refreshListEveryCycles = 5
+
+# 单次请求超时（秒）。服务端高峰期常挂起不返回，调小可提高吞吐
+timeoutSeconds = 6
+
+# 0 = 不限运行时长，直到抢课成功
+maxRunMinutes = 0
+
+# 非选课时段的探测间隔（秒）。配合 [behavior] 的 waitWhenClosed 使用
+closedWaitSeconds = 10
+
+
+[concurrency]
+# 并发路数：同一个请求同时发几路。
+# 32 ≈ 串行的 32 倍吞吐（实测服务端不限单用户并发）
+threads = 32
+
+# 单个请求的总尝试上限（所有线程合计）。3200 / 32 = 100 轮，每轮 32 路并发
+maxTotalAttempts = 3200
+
+
+[behavior]
+# 退出条件：
+#   true  = 每个关键字（类型）都抢到一门才退出（默认）
+#   false = 抢到任意一门就退出
+requireAllKeywords = true
+
+# 非选课时段怎么办：
+#   true  = 持续轮询等待，探测到选课开放后自动开始抢课（适合提前启动等待）
+#   false = 直接结束
+waitWhenClosed = true
+
+# 服务端回 selected（你已选过此门课）时，是否也算该类型已达成
+treatSelectedAsSuccess = true
+
+# 试运行：只建池不选课（同命令行 --dry-run）
+dryRun = false
+
+# 日志详细程度（仅影响「6666 重试」的细粒度日志）：
+#   true  = 每个重试轮都打印
+#   false = 每 3 个重试轮打印一次
+verbose = false
+
+# 忽略缓存 Cookie 强制重新登录（同命令行 --relogin）：
+#   true  = 忽略缓存，强制重新登录
+#   false = 优先复用缓存会话（默认）
+forceRelogin = false
